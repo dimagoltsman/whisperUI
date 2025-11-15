@@ -352,11 +352,20 @@ class WhisperApp:
                 device, compute_type, hw_description = self.detect_hardware()
 
                 # Load model with detected settings
-                self.model = WhisperModel(
-                    requested_model,
-                    device=device,
-                    compute_type=compute_type
-                )
+                # On Windows, limit threads to avoid multiprocessing issues with PyInstaller
+                if platform.system() == "Windows":
+                    self.model = WhisperModel(
+                        requested_model,
+                        device=device,
+                        compute_type=compute_type,
+                        num_workers=1  # Limit workers on Windows
+                    )
+                else:
+                    self.model = WhisperModel(
+                        requested_model,
+                        device=device,
+                        compute_type=compute_type
+                    )
 
                 # Track which model is loaded
                 self.loaded_model_size = requested_model
@@ -431,17 +440,13 @@ class WhisperApp:
             lang_code = self.get_language_code(selected_lang)
 
             # Transcribe with streaming output and word-level timestamps
-            # On Windows, use num_workers=1 to avoid multiprocessing issues with PyInstaller
-            num_workers = 1 if platform.system() == "Windows" else 2
-
             segments, info = self.model.transcribe(
                 file_path,
                 beam_size=5,
                 language=lang_code,
                 word_timestamps=True,  # Enable word-level timestamps for SRT export
                 vad_filter=True,  # Use voice activity detection
-                vad_parameters=dict(min_silence_duration_ms=500),
-                num_workers=num_workers  # Windows needs 1 worker to avoid crashes
+                vad_parameters=dict(min_silence_duration_ms=500)
             )
 
             # Display segments as they're transcribed (streaming)
