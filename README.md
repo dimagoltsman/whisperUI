@@ -132,9 +132,18 @@ To create a standalone macOS .app bundle:
    open dist/
    ```
 
-4. **Drag `WhisperOSX.app` to your Applications folder**
+4. **Drag `WhisperUI.app` to your Applications folder**
 
-**Note:** The first time you open the app, macOS may show a security warning because it's not signed. Right-click the app and select "Open" to bypass this.
+**Note:** The first time you open the app, macOS will show a security warning because it's not code-signed.
+
+To open the app:
+1. Right-click `WhisperUI.app` → "Open"
+2. Click "Open" in the dialog
+
+Or remove the quarantine flag:
+```bash
+xattr -d com.apple.quarantine /Applications/WhisperUI.app
+```
 
 ### Intel vs Apple Silicon
 
@@ -192,6 +201,30 @@ For detailed Windows build instructions, see [WINDOWS_BUILD.md](WINDOWS_BUILD.md
 - Optionally create an installer using Inno Setup or NSIS
 
 ## Troubleshooting
+
+### macOS Security Warning: "Cannot be opened because it is from an unidentified developer"
+
+This is normal for unsigned apps. To open:
+
+**Option 1: Right-click method (Easiest)**
+1. Don't double-click! Instead, **right-click** the app → "Open"
+2. Click "Open" in the security dialog
+3. The app will now open (only needed once)
+
+**Option 2: System Settings**
+1. Try to open the app (it will be blocked)
+2. Go to **System Settings** → **Privacy & Security**
+3. Scroll down to "Security"
+4. Click **"Open Anyway"** next to WhisperUI
+5. Open the app again
+
+**Option 3: Remove quarantine (Terminal)**
+```bash
+xattr -d com.apple.quarantine /path/to/WhisperUI.app
+```
+
+**Why does this happen?**
+The app isn't code-signed with an Apple Developer certificate (costs $99/year). This is normal for free/open-source apps.
 
 ### "No module named 'faster_whisper'"
 Make sure you've activated the virtual environment and installed dependencies:
