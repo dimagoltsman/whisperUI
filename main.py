@@ -431,11 +431,17 @@ class WhisperApp:
             lang_code = self.get_language_code(selected_lang)
 
             # Transcribe with streaming output and word-level timestamps
+            # On Windows, use num_workers=1 to avoid multiprocessing issues with PyInstaller
+            num_workers = 1 if platform.system() == "Windows" else 2
+
             segments, info = self.model.transcribe(
                 file_path,
                 beam_size=5,
                 language=lang_code,
-                word_timestamps=True  # Enable word-level timestamps for SRT export
+                word_timestamps=True,  # Enable word-level timestamps for SRT export
+                vad_filter=True,  # Use voice activity detection
+                vad_parameters=dict(min_silence_duration_ms=500),
+                num_workers=num_workers  # Windows needs 1 worker to avoid crashes
             )
 
             # Display segments as they're transcribed (streaming)
@@ -471,8 +477,12 @@ class WhisperApp:
             self.root.after(0, lambda: self.btn_save_srt_words.config(state=tk.NORMAL))
 
         except Exception as e:
+            import traceback
             error_msg = str(e)
-            self.root.after(0, lambda msg=error_msg: messagebox.showerror("Transcription Error", f"An error occurred: {msg}"))
+            error_traceback = traceback.format_exc()
+            print(f"Transcription error: {error_msg}")
+            print(f"Traceback:\n{error_traceback}")
+            self.root.after(0, lambda msg=error_msg: messagebox.showerror("Transcription Error", f"An error occurred:\n{msg}\n\nCheck console for details."))
             self.root.after(0, lambda msg=error_msg: self.status.config(text=f"Error: {msg}", fg="#F44336"))
 
         finally:
