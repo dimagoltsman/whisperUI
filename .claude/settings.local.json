@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(./venv/bin/pip install:*)",
+      "Bash(chmod:*)",
+      "Bash(./build_app.sh:*)",
+      "Bash(./build_pyinstaller.sh:*)",
+      "Read(//Library/Frameworks/Python.framework/Versions/3.10/bin/**)",
+      "Bash(./build_intel.sh:*)",
+      "Bash(source:*)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(iconutil:*)",
+      "Bash(pyinstaller:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
