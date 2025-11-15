@@ -26,6 +26,7 @@ class WhisperApp:
         self.language = tk.StringVar(value="Auto")
         self.current_file = None
         self.segments_data = []  # Store segments with timestamps for SRT export
+        self.stop_event = threading.Event()  # Event to signal transcription stop
 
         self.setup_ui()
 
@@ -132,6 +133,26 @@ class WhisperApp:
         )
         self.btn_start.pack(side=tk.LEFT, padx=5)
 
+        # Stop button
+        self.btn_stop = tk.Button(
+            buttons_frame,
+            text="Stop",
+            command=self.stop_transcription,
+            bg="#FFEBEE",
+            fg="#C62828",
+            font=("Helvetica", 13, "bold"),
+            padx=30,
+            pady=12,
+            relief=tk.RAISED,
+            bd=2,
+            state=tk.DISABLED,
+            disabledforeground="#FFCDD2",
+            activebackground="#FFCDD2",
+            activeforeground="#B71C1C",
+            highlightthickness=0
+        )
+        self.btn_stop.pack(side=tk.LEFT, padx=5)
+
         # Save button
         self.btn_save = tk.Button(
             buttons_frame,
@@ -236,18 +257,37 @@ class WhisperApp:
         )
 
         if file_path:
+            # Reset everything when a new file is selected
             self.current_file = file_path
+            self.segments_data = []
+
+            # Clear text area
+            self.text_area.delete(1.0, tk.END)
+
+            # Reset button states
+            self.btn_start.config(state=tk.NORMAL)
+            self.btn_stop.config(state=tk.DISABLED)
+            self.btn_save.config(state=tk.DISABLED)
+            self.btn_save_srt.config(state=tk.DISABLED)
+            self.btn_save_srt_words.config(state=tk.DISABLED)
+
+            # Update status
             filename = Path(file_path).name
             self.status.config(text=f"Ready: {filename}", fg="#1565C0")
-
-            # Enable the Start button
-            self.btn_start.config(state=tk.NORMAL)
 
     def start_transcription(self):
         """Start transcription when user clicks Start button"""
         if self.current_file:
+            # Clear stop event
+            self.stop_event.clear()
+
             # Start transcription in separate thread
             threading.Thread(target=self.transcribe, args=(self.current_file,), daemon=True).start()
+
+    def stop_transcription(self):
+        """Stop ongoing transcription"""
+        self.stop_event.set()
+        self.status.config(text="Stopping transcription...", fg="#FF9800")
 
     def load_model(self):
         """Load the Whisper model (lazy loading)"""
@@ -309,6 +349,7 @@ class WhisperApp:
             # Disable buttons during transcription (on main thread)
             self.root.after(0, lambda: self.btn_select.config(state=tk.DISABLED))
             self.root.after(0, lambda: self.btn_start.config(state=tk.DISABLED))
+            self.root.after(0, lambda: self.btn_stop.config(state=tk.NORMAL))  # Enable stop button
             self.root.after(0, lambda: self.btn_save.config(state=tk.DISABLED))
             self.root.after(0, lambda: self.btn_save_srt.config(state=tk.DISABLED))
             self.root.after(0, lambda: self.btn_save_srt_words.config(state=tk.DISABLED))
@@ -344,6 +385,11 @@ class WhisperApp:
             # Display segments as they're transcribed (streaming)
             detected_lang = "unknown"
             for segment in segments:
+                # Check if stop was requested
+                if self.stop_event.is_set():
+                    self.root.after(0, lambda: self.status.config(text="Transcription stopped by user", fg="#FF9800"))
+                    return  # Exit transcription early
+
                 # Store segment data for SRT export
                 self.segments_data.append(segment)
 
@@ -376,8 +422,15 @@ class WhisperApp:
         finally:
             # Stop progress bar and re-enable buttons (on main thread)
             self.root.after(0, lambda: self.progress.stop())
+            self.root.after(0, lambda: self.btn_stop.config(state=tk.DISABLED))  # Disable stop button
             self.root.after(0, lambda: self.btn_select.config(state=tk.NORMAL))
             self.root.after(0, lambda: self.btn_start.config(state=tk.NORMAL))
+
+            # Enable save buttons if we have transcribed segments
+            if self.segments_data:
+                self.root.after(0, lambda: self.btn_save.config(state=tk.NORMAL))
+                self.root.after(0, lambda: self.btn_save_srt.config(state=tk.NORMAL))
+                self.root.after(0, lambda: self.btn_save_srt_words.config(state=tk.NORMAL))
 
     def _append_text(self, text):
         """Append text to text area and auto-scroll (must be called on main thread)"""
