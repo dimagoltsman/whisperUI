@@ -27,7 +27,7 @@ This guide explains how to build the Whisper Transcription Tool on Windows.
 
 4. **Find your application:**
    ```
-   dist\WhisperTranscription\WhisperTranscription.exe
+   dist\WhisperUI\WhisperUI.exe
    ```
 
 ## Manual Build Steps
@@ -52,21 +52,21 @@ pip install pyinstaller
 ### 3. Build the Executable
 
 ```batch
-pyinstaller --name "WhisperTranscription" --windowed --noconfirm --clean --icon=icon.ico --hidden-import=tkinter --hidden-import=faster_whisper --hidden-import=ctranslate2 --hidden-import=av --hidden-import=tokenizers --hidden-import=huggingface_hub --hidden-import=onnxruntime --collect-all faster_whisper --collect-all ctranslate2 --collect-all tokenizers main.py
+pyinstaller --name "WhisperUI" --windowed --noconfirm --clean --icon=icon.ico --hidden-import=tkinter --hidden-import=faster_whisper --hidden-import=ctranslate2 --hidden-import=av --hidden-import=tokenizers --hidden-import=huggingface_hub --hidden-import=onnxruntime --collect-all faster_whisper --collect-all ctranslate2 --collect-all tokenizers main.py
 ```
 
 ### 4. Run the Application
 
 ```batch
-dist\WhisperTranscription\WhisperTranscription.exe
+dist\WhisperUI\WhisperUI.exe
 ```
 
 ## Distribution
 
-The `dist\WhisperTranscription` folder contains everything needed to run the application.
+The `dist\WhisperUI` folder contains everything needed to run the application.
 
 ### Option 1: ZIP Archive
-Simply compress the `dist\WhisperTranscription` folder and distribute it.
+Simply compress the `dist\WhisperUI` folder and distribute it.
 
 ### Option 2: Create Installer (Advanced)
 Use tools like:

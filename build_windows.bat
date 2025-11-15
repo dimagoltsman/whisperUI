@@ -37,7 +37,7 @@ pip install pyinstaller
 REM Build the executable
 echo Building Windows executable...
 pyinstaller ^
-    --name "WhisperTranscription" ^
+    --name "WhisperUI" ^
     --windowed ^
     --noconfirm ^
     --clean ^
@@ -54,12 +54,12 @@ pyinstaller ^
     --collect-all tokenizers ^
     main.py
 
-if exist "dist\WhisperTranscription" (
+if exist "dist\WhisperUI" (
     echo.
     echo ✓ Build successful!
-    echo Executable location: dist\WhisperTranscription\WhisperTranscription.exe
+    echo Executable location: dist\WhisperUI\WhisperUI.exe
     echo.
-    echo You can now distribute the entire dist\WhisperTranscription folder
+    echo You can now distribute the entire dist\WhisperUI folder
     echo or create an installer using NSIS, Inno Setup, etc.
 ) else (
     echo.

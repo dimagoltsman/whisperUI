@@ -32,7 +32,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='WhisperOSX',
+    name='WhisperUI',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -51,11 +51,11 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='WhisperOSX',
+    name='WhisperUI',
 )
 app = BUNDLE(
     coll,
-    name='WhisperOSX.app',
+    name='WhisperUI.app',
     icon='icon.icns',
     bundle_identifier=None,
 )

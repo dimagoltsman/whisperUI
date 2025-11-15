@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build script using PyInstaller (better for complex dependencies)
 
-echo "Building WhisperOSX.app with PyInstaller..."
+echo "Building WhisperUI.app with PyInstaller..."
 
 # Use the virtual environment's Python and pip
 VENV_PYTHON="./venv/bin/python"
@@ -24,13 +24,13 @@ rm -rf build dist
 
 # Build the app using the spec file (which has icon configured)
 echo "Building app bundle..."
-if [ -f "WhisperOSX.spec" ]; then
-    echo "Using existing WhisperOSX.spec file..."
-    $VENV_PYINSTALLER WhisperOSX.spec
+if [ -f "WhisperUI.spec" ]; then
+    echo "Using existing WhisperUI.spec file..."
+    $VENV_PYINSTALLER WhisperUI.spec
 else
     echo "Creating new build with icon..."
     $VENV_PYINSTALLER \
-        --name "WhisperOSX" \
+        --name "WhisperUI" \
         --windowed \
         --noconfirm \
         --clean \
@@ -48,12 +48,12 @@ else
         main.py
 fi
 
-if [ -d "dist/WhisperOSX.app" ]; then
+if [ -d "dist/WhisperUI.app" ]; then
     echo ""
     echo "✓ Build successful!"
-    echo "App location: dist/WhisperOSX.app"
+    echo "App location: dist/WhisperUI.app"
     echo ""
-    echo "To install, drag WhisperOSX.app to your Applications folder"
+    echo "To install, drag WhisperUI.app to your Applications folder"
     echo "Or run: open dist/"
 else
     echo "✗ Build failed"

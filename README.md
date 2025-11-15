@@ -155,8 +155,8 @@ This uses Rosetta 2 to create an x86_64 version that works on Intel Macs.
 ```
 
 The build scripts will create:
-- `WhisperOSX.app` - Native architecture version
-- `WhisperOSX_Intel.app` - Intel (x86_64) version (from build_intel.sh)
+- `WhisperUI.app` - Native architecture version
+- `WhisperUI_Intel.app` - Intel (x86_64) version (from build_intel.sh)
 
 ### macOS Build Details
 
@@ -180,7 +180,7 @@ To create a standalone Windows .exe:
    build_windows.bat
    ```
 
-4. **The executable will be created in `dist\WhisperTranscription\`**
+4. **The executable will be created in `dist\WhisperUI\`**
 
 For detailed Windows build instructions, see [WINDOWS_BUILD.md](WINDOWS_BUILD.md)
 
@@ -188,7 +188,7 @@ For detailed Windows build instructions, see [WINDOWS_BUILD.md](WINDOWS_BUILD.md
 
 - Uses **PyInstaller** for packaging
 - Creates a ~500MB executable folder (includes Python + all dependencies)
-- Distribute the entire `dist\WhisperTranscription` folder
+- Distribute the entire `dist\WhisperUI` folder
 - Optionally create an installer using Inno Setup or NSIS
 
 ## Troubleshooting

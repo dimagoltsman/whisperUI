@@ -23,7 +23,7 @@ arch -x86_64 ./venv_intel/bin/pip install -r requirements.txt
 
 echo "Step 3/3: Building x86_64 app bundle..."
 arch -x86_64 ./venv_intel/bin/pyinstaller \
-    --name "WhisperOSX_Intel" \
+    --name "WhisperUI_Intel" \
     --windowed \
     --noconfirm \
     --clean \
@@ -40,11 +40,11 @@ arch -x86_64 ./venv_intel/bin/pyinstaller \
     --collect-all tokenizers \
     main.py
 
-if [ -d "dist/WhisperOSX_Intel.app" ]; then
-    ARCH=$(file dist/WhisperOSX_Intel.app/Contents/MacOS/WhisperOSX_Intel | grep -o "x86_64\|arm64")
+if [ -d "dist/WhisperUI_Intel.app" ]; then
+    ARCH=$(file dist/WhisperUI_Intel.app/Contents/MacOS/WhisperUI_Intel | grep -o "x86_64\|arm64")
     echo ""
     echo "✓ Build successful!"
-    echo "App location: dist/WhisperOSX_Intel.app"
+    echo "App location: dist/WhisperUI_Intel.app"
     echo "Architecture: $ARCH"
     echo ""
     if [[ "$ARCH" == "x86_64" ]]; then
