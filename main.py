@@ -10,6 +10,7 @@ from tkinter import ttk
 from pathlib import Path
 import threading
 import multiprocessing
+import platform
 from faster_whisper import WhisperModel
 
 
@@ -220,7 +221,16 @@ class WhisperApp:
             fg="#666",
             font=("Helvetica", 10)
         )
-        self.status.pack(pady=(0, 10))
+        self.status.pack(pady=(0, 5))
+
+        # Hardware info label
+        self.hw_info = tk.Label(
+            main_frame,
+            text="",
+            fg="#888",
+            font=("Helvetica", 9, "italic")
+        )
+        self.hw_info.pack(pady=(0, 5))
 
         # Progress bar
         self.progress = ttk.Progressbar(
@@ -289,6 +299,45 @@ class WhisperApp:
         self.stop_event.set()
         self.status.config(text="Stopping transcription...", fg="#FF9800")
 
+    def detect_hardware(self):
+        """Detect available hardware acceleration for Whisper"""
+        # Try to detect CUDA (NVIDIA GPU) by checking if ctranslate2 has CUDA support
+        try:
+            import ctranslate2
+            # Check if CUDA is available in ctranslate2
+            if hasattr(ctranslate2, 'get_cuda_device_count'):
+                cuda_count = ctranslate2.get_cuda_device_count()
+                if cuda_count > 0:
+                    # Get GPU name if possible
+                    try:
+                        import torch
+                        if torch.cuda.is_available():
+                            gpu_name = torch.cuda.get_device_name(0)
+                            return "cuda", "float16", f"GPU: {gpu_name} (CUDA)"
+                    except ImportError:
+                        pass
+                    return "cuda", "float16", "GPU: CUDA available"
+        except (ImportError, AttributeError):
+            pass
+
+        # Fallback to CPU - determine OS for better description
+        system = platform.system()
+        machine = platform.machine()
+
+        if system == "Darwin":
+            # macOS
+            if machine == "arm64":
+                return "cpu", "int8", "CPU: Apple Silicon (int8 optimized)"
+            else:
+                return "cpu", "int8", "CPU: Intel Mac (int8 optimized)"
+        elif system == "Windows":
+            return "cpu", "int8", "CPU: Windows (int8 optimized)"
+        elif system == "Linux":
+            return "cpu", "int8", "CPU: Linux (int8 optimized)"
+
+        # Default to CPU
+        return "cpu", "int8", "CPU (int8 optimized)"
+
     def load_model(self):
         """Load the Whisper model (lazy loading)"""
         requested_model = self.model_size.get()
@@ -299,15 +348,22 @@ class WhisperApp:
                 self.root.after(0, lambda name=requested_model: self.status.config(text=f"Loading {name} model...", fg="#FF9800"))
                 self.root.after(0, lambda: self.root.update())
 
-                # Use int8 for better CPU performance on Intel Macs
+                # Detect hardware and choose appropriate settings
+                device, compute_type, hw_description = self.detect_hardware()
+
+                # Load model with detected settings
                 self.model = WhisperModel(
                     requested_model,
-                    device="cpu",
-                    compute_type="int8"
+                    device=device,
+                    compute_type=compute_type
                 )
 
                 # Track which model is loaded
                 self.loaded_model_size = requested_model
+
+                # Display hardware info
+                hw_info_text = f"Running on: {hw_description}"
+                self.root.after(0, lambda text=hw_info_text: self.hw_info.config(text=text))
 
                 return True
             except Exception as e:
