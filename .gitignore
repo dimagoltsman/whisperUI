@@ -37,5 +37,13 @@ wheels/
 .AppleDouble
 .LSOverride
 
+# Claude Code
+.claude/
+
 # Transcription files (optional - uncomment if you don't want to commit transcriptions)
 # *_transcription.txt
+
+# Test files
+*.srt
+*_words.srt
+test_*.txt

@@ -1,0 +1,185 @@
+name: Build Whisper Transcription Tool
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0
+  workflow_dispatch:  # Allow manual triggering
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+        include:
+          - os: macos-latest
+            artifact_name: WhisperOSX.app
+            artifact_path: dist/WhisperOSX.app
+            build_script: ./build_pyinstaller.sh
+            zip_name: WhisperTranscription-macOS
+          - os: windows-latest
+            artifact_name: WhisperTranscription.exe
+            artifact_path: dist/WhisperTranscription
+            build_script: build_windows.bat
+            zip_name: WhisperTranscription-Windows
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pip
+          ~/Library/Caches/pip
+          ~\AppData\Local\pip\Cache
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        python3 -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        python -m venv venv_win
+        venv_win\Scripts\activate.bat
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Build macOS app
+      if: runner.os == 'macOS'
+      run: |
+        chmod +x build_pyinstaller.sh
+        ./build_pyinstaller.sh
+
+    - name: Build Windows app
+      if: runner.os == 'Windows'
+      shell: cmd
+      run: |
+        call venv_win\Scripts\activate.bat
+        pyinstaller --name "WhisperTranscription" --windowed --noconfirm --clean --icon=icon.ico --hidden-import=tkinter --hidden-import=faster_whisper --hidden-import=ctranslate2 --hidden-import=av --hidden-import=tokenizers --hidden-import=huggingface_hub --hidden-import=onnxruntime --collect-all faster_whisper --collect-all ctranslate2 --collect-all tokenizers main.py
+
+    - name: Verify build (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        if [ -d "dist/WhisperOSX.app" ]; then
+          echo "✓ macOS build successful"
+          ls -lh dist/
+        else
+          echo "✗ macOS build failed"
+          exit 1
+        fi
+
+    - name: Verify build (Windows)
+      if: runner.os == 'Windows'
+      shell: cmd
+      run: |
+        if exist "dist\WhisperTranscription\WhisperTranscription.exe" (
+          echo Build successful
+          dir dist\WhisperTranscription
+        ) else (
+          echo Build failed
+          exit /b 1
+        )
+
+    - name: Create ZIP archive (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        cd dist
+        zip -r ${{ matrix.zip_name }}.zip WhisperOSX.app
+        cd ..
+
+    - name: Create ZIP archive (Windows)
+      if: runner.os == 'Windows'
+      shell: powershell
+      run: |
+        Compress-Archive -Path dist\WhisperTranscription -DestinationPath dist\${{ matrix.zip_name }}.zip
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.zip_name }}
+        path: dist/${{ matrix.zip_name }}.zip
+        retention-days: 30
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/${{ matrix.zip_name }}.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-intel:
+    runs-on: macos-13  # Intel-based macOS runner
+    if: startsWith(github.ref, 'refs/tags/')  # Only build Intel on release
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python3 -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Build Intel macOS app
+      run: |
+        chmod +x build_pyinstaller.sh
+        ./build_pyinstaller.sh
+        # Rename to distinguish from ARM build
+        mv dist/WhisperOSX.app dist/WhisperOSX_Intel.app
+
+    - name: Create ZIP archive
+      run: |
+        cd dist
+        zip -r WhisperTranscription-macOS-Intel.zip WhisperOSX_Intel.app
+        cd ..
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: WhisperTranscription-macOS-Intel
+        path: dist/WhisperTranscription-macOS-Intel.zip
+        retention-days: 30
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/WhisperTranscription-macOS-Intel.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

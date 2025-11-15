@@ -77,9 +77,43 @@ For Windows setup instructions, see [WINDOWS_BUILD.md](WINDOWS_BUILD.md)
 - **Audio**: MP3, WAV, M4A, FLAC, OGG, WMA, AAC
 - **Video**: MP4, AVI, MOV, MKV
 
+## Download Pre-built Releases
+
+**The easiest way to get the app is to download pre-built releases from GitHub:**
+
+👉 **[Download Latest Release](https://github.com/dimagoltsman/whisperUI/releases/latest)**
+
+Available builds:
+- **macOS (Apple Silicon)** - For M1/M2/M3/M4 Macs
+- **macOS (Intel)** - For Intel-based Macs
+- **Windows (64-bit)** - For Windows 10/11
+
+All builds are automatically created using GitHub Actions whenever a new version is released.
+
 ## Building Standalone Applications
 
-### macOS App
+### Automated Builds (GitHub Actions)
+
+This project uses GitHub Actions to automatically build for all platforms:
+
+1. **Fork or clone this repository**
+2. **Push a version tag**:
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+3. **GitHub Actions will automatically build**:
+   - macOS app (Apple Silicon)
+   - macOS app (Intel)
+   - Windows executable
+
+4. **Download from the Releases page**
+
+See [RELEASING.md](RELEASING.md) for detailed instructions.
+
+### Manual Local Builds
+
+#### macOS App
 
 To create a standalone macOS .app bundle:
 
