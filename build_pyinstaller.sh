@@ -19,27 +19,34 @@ fi
 echo "Installing PyInstaller..."
 $VENV_PIP install pyinstaller
 
-# Clean previous builds
-rm -rf build dist *.spec
+# Clean previous builds (but keep the spec file with icon config)
+rm -rf build dist
 
-# Build the app
+# Build the app using the spec file (which has icon configured)
 echo "Building app bundle..."
-$VENV_PYINSTALLER \
-    --name "WhisperOSX" \
-    --windowed \
-    --noconfirm \
-    --clean \
-    --hidden-import=tkinter \
-    --hidden-import=faster_whisper \
-    --hidden-import=ctranslate2 \
-    --hidden-import=av \
-    --hidden-import=tokenizers \
-    --hidden-import=huggingface_hub \
-    --hidden-import=onnxruntime \
-    --collect-all faster_whisper \
-    --collect-all ctranslate2 \
-    --collect-all tokenizers \
-    main.py
+if [ -f "WhisperOSX.spec" ]; then
+    echo "Using existing WhisperOSX.spec file..."
+    $VENV_PYINSTALLER WhisperOSX.spec
+else
+    echo "Creating new build with icon..."
+    $VENV_PYINSTALLER \
+        --name "WhisperOSX" \
+        --windowed \
+        --noconfirm \
+        --clean \
+        --icon=icon.icns \
+        --hidden-import=tkinter \
+        --hidden-import=faster_whisper \
+        --hidden-import=ctranslate2 \
+        --hidden-import=av \
+        --hidden-import=tokenizers \
+        --hidden-import=huggingface_hub \
+        --hidden-import=onnxruntime \
+        --collect-all faster_whisper \
+        --collect-all ctranslate2 \
+        --collect-all tokenizers \
+        main.py
+fi
 
 if [ -d "dist/WhisperOSX.app" ]; then
     echo ""
