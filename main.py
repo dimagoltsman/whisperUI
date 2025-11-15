@@ -299,23 +299,12 @@ class WhisperApp:
                 self.root.after(0, lambda name=requested_model: self.status.config(text=f"Loading {name} model...", fg="#FF9800"))
                 self.root.after(0, lambda: self.root.update())
 
-                # Try to load with CUDA first, fall back to CPU if it fails
-                try:
-                    self.model = WhisperModel(
-                        requested_model,
-                        device="cuda",
-                        compute_type="float16"
-                    )
-                    print("Using CUDA GPU")
-                except Exception as cuda_error:
-                    print(f"CUDA not available ({cuda_error}), falling back to CPU")
-                    # Fall back to CPU with int8
-                    self.model = WhisperModel(
-                        requested_model,
-                        device="cpu",
-                        compute_type="int8"
-                    )
-                    print("Using CPU with int8")
+                # Use int8 for better CPU performance on Intel Macs
+                self.model = WhisperModel(
+                    requested_model,
+                    device="cpu",
+                    compute_type="int8"
+                )
 
                 # Track which model is loaded
                 self.loaded_model_size = requested_model
@@ -390,9 +379,7 @@ class WhisperApp:
                 file_path,
                 beam_size=5,
                 language=lang_code,
-                word_timestamps=True,  # Enable word-level timestamps for SRT export
-                vad_filter=True,  # Use voice activity detection
-                vad_parameters=dict(min_silence_duration_ms=500)
+                word_timestamps=True  # Enable word-level timestamps for SRT export
             )
 
             # Display segments as they're transcribed (streaming)
@@ -428,12 +415,8 @@ class WhisperApp:
             self.root.after(0, lambda: self.btn_save_srt_words.config(state=tk.NORMAL))
 
         except Exception as e:
-            import traceback
             error_msg = str(e)
-            error_traceback = traceback.format_exc()
-            print(f"Transcription error: {error_msg}")
-            print(f"Traceback:\n{error_traceback}")
-            self.root.after(0, lambda msg=error_msg: messagebox.showerror("Transcription Error", f"An error occurred:\n{msg}\n\nCheck console for details."))
+            self.root.after(0, lambda msg=error_msg: messagebox.showerror("Transcription Error", f"An error occurred: {msg}"))
             self.root.after(0, lambda msg=error_msg: self.status.config(text=f"Error: {msg}", fg="#F44336"))
 
         finally:
