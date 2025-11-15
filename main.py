@@ -299,12 +299,23 @@ class WhisperApp:
                 self.root.after(0, lambda name=requested_model: self.status.config(text=f"Loading {name} model...", fg="#FF9800"))
                 self.root.after(0, lambda: self.root.update())
 
-                # Use int8 for better CPU performance
-                self.model = WhisperModel(
-                    requested_model,
-                    device="cpu",
-                    compute_type="int8"
-                )
+                # Try to load with CUDA first, fall back to CPU if it fails
+                try:
+                    self.model = WhisperModel(
+                        requested_model,
+                        device="cuda",
+                        compute_type="float16"
+                    )
+                    print("Using CUDA GPU")
+                except Exception as cuda_error:
+                    print(f"CUDA not available ({cuda_error}), falling back to CPU")
+                    # Fall back to CPU with int8
+                    self.model = WhisperModel(
+                        requested_model,
+                        device="cpu",
+                        compute_type="int8"
+                    )
+                    print("Using CPU with int8")
 
                 # Track which model is loaded
                 self.loaded_model_size = requested_model
