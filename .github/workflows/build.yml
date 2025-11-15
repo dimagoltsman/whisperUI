@@ -157,8 +157,10 @@ jobs:
 
     - name: Build Intel macOS app
       run: |
-        chmod +x build_intel.sh
-        ./build_intel.sh
+        chmod +x build_pyinstaller.sh
+        ./build_pyinstaller.sh
+        # Rename to distinguish from ARM build
+        mv dist/WhisperUI.app dist/WhisperUI_Intel.app
 
     - name: Create ZIP archive
       run: |
