@@ -67,6 +67,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pyinstaller
+        pip install nvidia-cublas-cu12 nvidia-cudnn-cu12
 
     - name: Build macOS app
       if: runner.os == 'macOS'
@@ -76,10 +77,43 @@ jobs:
 
     - name: Build Windows app
       if: runner.os == 'Windows'
-      shell: cmd
+      shell: powershell
       run: |
-        call venv_win\Scripts\activate.bat
-        pyinstaller --name "WhisperUI" --console --noconfirm --clean --icon=icon.ico --hidden-import=tkinter --hidden-import=faster_whisper --hidden-import=ctranslate2 --hidden-import=av --hidden-import=tokenizers --hidden-import=huggingface_hub --hidden-import=onnxruntime --collect-all faster_whisper --collect-all ctranslate2 --collect-all tokenizers main.py
+        & venv_win\Scripts\activate.ps1
+
+        # Find all CUDA DLLs
+        $cudaDlls = Get-ChildItem -Recurse -Path "venv_win\Lib\site-packages\nvidia" -Filter "*.dll" -ErrorAction SilentlyContinue
+
+        # Build PyInstaller command with CUDA DLLs
+        $args = @(
+          "--name", "WhisperUI",
+          "--console",
+          "--noconfirm",
+          "--clean",
+          "--icon=icon.ico",
+          "--hidden-import=tkinter",
+          "--hidden-import=faster_whisper",
+          "--hidden-import=ctranslate2",
+          "--hidden-import=av",
+          "--hidden-import=tokenizers",
+          "--hidden-import=huggingface_hub",
+          "--hidden-import=onnxruntime",
+          "--collect-all", "faster_whisper",
+          "--collect-all", "ctranslate2",
+          "--collect-all", "tokenizers"
+        )
+
+        # Add each CUDA DLL explicitly
+        foreach ($dll in $cudaDlls) {
+          $args += "--add-binary"
+          $args += "$($dll.FullName);."
+        }
+
+        $args += "main.py"
+
+        Write-Host "Found $($cudaDlls.Count) CUDA DLLs to bundle"
+
+        & pyinstaller $args
 
     - name: Verify build (macOS)
       if: runner.os == 'macOS'
