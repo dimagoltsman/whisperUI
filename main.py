@@ -18,9 +18,18 @@ import os
 if sys.platform == "win32" and getattr(sys, 'frozen', False):
     # We're running in a PyInstaller bundle
     bundle_dir = sys._MEIPASS
-    # Add bundle directory to DLL search path
+
+    # Add bundle directory and nvidia subdirectories to DLL search path
     if hasattr(os, 'add_dll_directory'):
         os.add_dll_directory(bundle_dir)
+        # Add nvidia subdirectories
+        nvidia_dirs = [os.path.join(bundle_dir, 'nvidia', d) for d in ['cublas', 'cudnn']
+                       if os.path.exists(os.path.join(bundle_dir, 'nvidia', d))]
+        for nv_dir in nvidia_dirs:
+            for root, dirs, files in os.walk(nv_dir):
+                if any(f.endswith('.dll') for f in files):
+                    os.add_dll_directory(root)
+
     # Also add to PATH
     os.environ['PATH'] = bundle_dir + os.pathsep + os.environ.get('PATH', '')
 

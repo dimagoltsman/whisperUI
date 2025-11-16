@@ -66,7 +66,7 @@ jobs:
         venv_win\Scripts\activate.bat
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pyinstaller
+        pip install nuitka ordered-set zstandard
         pip install nvidia-cublas-cu12 nvidia-cudnn-cu12
 
     - name: Build macOS app
@@ -77,43 +77,11 @@ jobs:
 
     - name: Build Windows app
       if: runner.os == 'Windows'
-      shell: powershell
+      shell: cmd
       run: |
-        & venv_win\Scripts\activate.ps1
-
-        # Find all CUDA DLLs
-        $cudaDlls = Get-ChildItem -Recurse -Path "venv_win\Lib\site-packages\nvidia" -Filter "*.dll" -ErrorAction SilentlyContinue
-
-        # Build PyInstaller command with CUDA DLLs
-        $args = @(
-          "--name", "WhisperUI",
-          "--console",
-          "--noconfirm",
-          "--clean",
-          "--icon=icon.ico",
-          "--hidden-import=tkinter",
-          "--hidden-import=faster_whisper",
-          "--hidden-import=ctranslate2",
-          "--hidden-import=av",
-          "--hidden-import=tokenizers",
-          "--hidden-import=huggingface_hub",
-          "--hidden-import=onnxruntime",
-          "--collect-all", "faster_whisper",
-          "--collect-all", "ctranslate2",
-          "--collect-all", "tokenizers"
-        )
-
-        # Add each CUDA DLL explicitly
-        foreach ($dll in $cudaDlls) {
-          $args += "--add-binary"
-          $args += "$($dll.FullName);."
-        }
-
-        $args += "main.py"
-
-        Write-Host "Found $($cudaDlls.Count) CUDA DLLs to bundle"
-
-        & pyinstaller $args
+        call venv_win\Scripts\activate.bat
+        python -m nuitka --standalone --assume-yes-for-downloads --windows-console-mode=attach --windows-icon-from-ico=icon.ico --include-package=faster_whisper --include-package=ctranslate2 --include-package=nvidia --include-package=tkinter --include-package=av --include-package=tokenizers --include-package=huggingface_hub --include-package=onnxruntime --enable-plugin=tk-inter --output-dir=dist --output-filename=WhisperUI.exe main.py
+        move dist\main.dist dist\WhisperUI
 
     - name: Verify build (macOS)
       if: runner.os == 'macOS'
