@@ -245,6 +245,53 @@ pip install -r requirements.txt
 - Use a smaller model size
 - Close other applications to free up RAM
 
+### Using GPU (CUDA) on Windows
+
+The app supports NVIDIA GPU acceleration, but requires CUDA libraries to be installed on your system.
+
+**Requirements:**
+- NVIDIA GPU with CUDA support
+- Windows 10/11 (64-bit)
+
+**Installation Steps:**
+
+1. **Download and install NVIDIA CUDA Toolkit**:
+   - CUDA 11.8: https://developer.nvidia.com/cuda-11-8-0-download-archive
+   - OR CUDA 12.x: https://developer.nvidia.com/cuda-downloads
+   - Choose "Windows" → "x86_64" → "10/11" → "exe (local)"
+   - Run the installer and follow the prompts
+
+2. **Download and install cuDNN**:
+   - Visit: https://developer.nvidia.com/cudnn
+   - Download cuDNN for your CUDA version (requires free NVIDIA account)
+   - Extract the zip file
+   - Copy files to your CUDA installation directory:
+     ```
+     From: cudnn-windows-x86_64-*\bin\*.dll
+     To: C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin\
+
+     From: cudnn-windows-x86_64-*\include\*.h
+     To: C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\include\
+
+     From: cudnn-windows-x86_64-*\lib\*.lib
+     To: C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\lib\
+     ```
+
+3. **Verify installation**:
+   - Open Command Prompt
+   - Run: `nvcc --version`
+   - Should show CUDA compiler version
+
+4. **Use GPU in the app**:
+   - Launch WhisperUI
+   - Select "GPU (CUDA)" radio button
+   - If CUDA is not properly installed, the GPU option will be disabled
+
+**Troubleshooting GPU issues:**
+- If you see "cuDNN DLL" errors, make sure cuDNN is properly installed
+- Check that your NVIDIA drivers are up to date
+- The console window will show detailed error messages if GPU fails to load
+
 ## License
 
 MIT License - feel free to modify and distribute
