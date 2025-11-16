@@ -24,12 +24,27 @@ class WhisperApp:
         self.loaded_model_size = None  # Track which model is currently loaded
         self.model_size = tk.StringVar(value="base")
         self.language = tk.StringVar(value="Auto")
-        self.device = tk.StringVar(value="CPU (int8)")  # Device selection
+        self.device = tk.StringVar(value="cpu")  # Device selection: "cpu" or "cuda"
         self.current_file = None
         self.segments_data = []  # Store segments with timestamps for SRT export
         self.stop_event = threading.Event()  # Event to signal transcription stop
 
+        # Check if CUDA is available
+        self.cuda_available = self.check_cuda_available()
+
         self.setup_ui()
+
+    def check_cuda_available(self):
+        """Check if CUDA is available without crashing"""
+        try:
+            # Try to create a test model with CUDA
+            # This is a safe way to check without complex detection
+            import ctranslate2
+            if hasattr(ctranslate2, 'get_cuda_device_count'):
+                return ctranslate2.get_cuda_device_count() > 0
+        except Exception:
+            pass
+        return False
 
     def setup_ui(self):
         # Main container
@@ -92,26 +107,32 @@ class WhisperApp:
         )
         self.language_dropdown.pack(side=tk.LEFT)
 
-        # Device selection
+        # Device selection (radio buttons)
         device_frame = tk.Frame(controls_frame)
         device_frame.pack(side=tk.LEFT, padx=(0, 10))
 
         tk.Label(device_frame, text="Device:", font=("Helvetica", 11)).pack(side=tk.LEFT, padx=(0, 5))
-        self.device_dropdown = tk.OptionMenu(
+
+        # CPU radio button (always enabled)
+        self.cpu_radio = tk.Radiobutton(
             device_frame,
-            self.device,
-            "CPU (int8)",
-            "GPU (CUDA)"
+            text="CPU (int8)",
+            variable=self.device,
+            value="cpu",
+            font=("Helvetica", 10)
         )
-        self.device_dropdown.config(
-            font=("Helvetica", 11),
-            bg="white",
-            fg="black",
-            highlightthickness=1,
-            relief=tk.RAISED,
-            width=12
+        self.cpu_radio.pack(side=tk.LEFT, padx=(0, 5))
+
+        # GPU radio button (disabled if CUDA not available)
+        self.gpu_radio = tk.Radiobutton(
+            device_frame,
+            text="GPU (CUDA)",
+            variable=self.device,
+            value="cuda",
+            font=("Helvetica", 10),
+            state=tk.NORMAL if self.cuda_available else tk.DISABLED
         )
-        self.device_dropdown.pack(side=tk.LEFT)
+        self.gpu_radio.pack(side=tk.LEFT)
 
         # Buttons frame (to organize on next row)
         buttons_frame = tk.Frame(main_frame)
@@ -321,15 +342,9 @@ class WhisperApp:
                 self.root.after(0, lambda name=requested_model: self.status.config(text=f"Loading {name} model...", fg="#FF9800"))
                 self.root.after(0, lambda: self.root.update())
 
-                # Get device selection from dropdown
-                device_selection = self.device.get()
-
-                if device_selection == "GPU (CUDA)":
-                    device = "cuda"
-                    compute_type = "float16"
-                else:  # CPU (int8)
-                    device = "cpu"
-                    compute_type = "int8"
+                # Get device selection from radio buttons
+                device = self.device.get()  # "cpu" or "cuda"
+                compute_type = "float16" if device == "cuda" else "int8"
 
                 self.model = WhisperModel(
                     requested_model,
