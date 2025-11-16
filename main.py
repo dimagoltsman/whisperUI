@@ -24,6 +24,7 @@ class WhisperApp:
         self.loaded_model_size = None  # Track which model is currently loaded
         self.model_size = tk.StringVar(value="base")
         self.language = tk.StringVar(value="Auto")
+        self.device = tk.StringVar(value="CPU (int8)")  # Device selection
         self.current_file = None
         self.segments_data = []  # Store segments with timestamps for SRT export
         self.stop_event = threading.Event()  # Event to signal transcription stop
@@ -90,6 +91,27 @@ class WhisperApp:
             width=12
         )
         self.language_dropdown.pack(side=tk.LEFT)
+
+        # Device selection
+        device_frame = tk.Frame(controls_frame)
+        device_frame.pack(side=tk.LEFT, padx=(0, 10))
+
+        tk.Label(device_frame, text="Device:", font=("Helvetica", 11)).pack(side=tk.LEFT, padx=(0, 5))
+        self.device_dropdown = tk.OptionMenu(
+            device_frame,
+            self.device,
+            "CPU (int8)",
+            "GPU (CUDA)"
+        )
+        self.device_dropdown.config(
+            font=("Helvetica", 11),
+            bg="white",
+            fg="black",
+            highlightthickness=1,
+            relief=tk.RAISED,
+            width=12
+        )
+        self.device_dropdown.pack(side=tk.LEFT)
 
         # Buttons frame (to organize on next row)
         buttons_frame = tk.Frame(main_frame)
@@ -299,11 +321,20 @@ class WhisperApp:
                 self.root.after(0, lambda name=requested_model: self.status.config(text=f"Loading {name} model...", fg="#FF9800"))
                 self.root.after(0, lambda: self.root.update())
 
-                # Use int8 for better CPU performance on Intel Macs
+                # Get device selection from dropdown
+                device_selection = self.device.get()
+
+                if device_selection == "GPU (CUDA)":
+                    device = "cuda"
+                    compute_type = "float16"
+                else:  # CPU (int8)
+                    device = "cpu"
+                    compute_type = "int8"
+
                 self.model = WhisperModel(
                     requested_model,
-                    device="cpu",
-                    compute_type="int8"
+                    device=device,
+                    compute_type=compute_type
                 )
 
                 # Track which model is loaded
