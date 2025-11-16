@@ -12,6 +12,18 @@ import threading
 import multiprocessing
 import sys
 import traceback
+import os
+
+# Add CUDA DLLs to PATH on Windows (for PyInstaller bundle)
+if sys.platform == "win32" and getattr(sys, 'frozen', False):
+    # We're running in a PyInstaller bundle
+    bundle_dir = sys._MEIPASS
+    # Add bundle directory to DLL search path
+    if hasattr(os, 'add_dll_directory'):
+        os.add_dll_directory(bundle_dir)
+    # Also add to PATH
+    os.environ['PATH'] = bundle_dir + os.pathsep + os.environ.get('PATH', '')
+
 from faster_whisper import WhisperModel
 
 
