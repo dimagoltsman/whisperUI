@@ -10,6 +10,8 @@ from tkinter import ttk
 from pathlib import Path
 import threading
 import multiprocessing
+import sys
+import traceback
 from faster_whisper import WhisperModel
 
 
@@ -346,11 +348,17 @@ class WhisperApp:
                 device = self.device.get()  # "cpu" or "cuda"
                 compute_type = "float16" if device == "cuda" else "int8"
 
+                print(f"Loading model: {requested_model} on device: {device} with compute_type: {compute_type}")
+                sys.stdout.flush()
+
                 self.model = WhisperModel(
                     requested_model,
                     device=device,
                     compute_type=compute_type
                 )
+
+                print(f"Model loaded successfully!")
+                sys.stdout.flush()
 
                 # Track which model is loaded
                 self.loaded_model_size = requested_model
@@ -358,7 +366,14 @@ class WhisperApp:
                 return True
             except Exception as e:
                 error_msg = str(e)
-                self.root.after(0, lambda msg=error_msg: messagebox.showerror("Model Error", f"Failed to load model: {msg}"))
+                error_trace = traceback.format_exc()
+                print(f"ERROR loading model:")
+                print(f"  Device: {device}")
+                print(f"  Compute type: {compute_type}")
+                print(f"  Error message: {error_msg}")
+                print(f"  Full traceback:\n{error_trace}")
+                sys.stdout.flush()
+                self.root.after(0, lambda msg=error_msg: messagebox.showerror("Model Error", f"Failed to load model: {msg}\n\nCheck console for details."))
                 return False
         return True
 
