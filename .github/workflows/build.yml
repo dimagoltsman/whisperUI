@@ -26,7 +26,7 @@ jobs:
             artifact_name: WhisperUI.exe
             artifact_path: dist/WhisperUI
             build_script: build_windows.bat
-            zip_name: WhisperUI-Windows
+            zip_name: WhisperUI-Windows-CPU
 
     runs-on: ${{ matrix.os }}
 
@@ -59,12 +59,14 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
-    - name: Install dependencies (Windows)
+    - name: Install dependencies (Windows CPU)
       if: runner.os == 'Windows'
-      shell: cmd
       run: |
         python -m venv venv_win
-        call venv_win\Scripts\activate.bat && python -m pip install --upgrade pip && pip install -r requirements.txt && pip install nuitka ordered-set zstandard cython && pip install nvidia-cublas-cu12 nvidia-cudnn-cu12
+        venv_win\Scripts\activate.bat
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
 
     - name: Build macOS app
       if: runner.os == 'macOS'
@@ -72,11 +74,11 @@ jobs:
         chmod +x build_pyinstaller.sh
         ./build_pyinstaller.sh
 
-    - name: Build Windows app
+    - name: Build Windows CPU app
       if: runner.os == 'Windows'
-      shell: cmd
       run: |
-        call venv_win\Scripts\activate.bat && python -m nuitka --standalone --assume-yes-for-downloads --windows-console-mode=attach --windows-icon-from-ico=icon.ico --include-package=faster_whisper --include-package=ctranslate2 --include-package=nvidia --include-package=tkinter --include-package=av --include-package=cython --include-package=tokenizers --include-package=huggingface_hub --include-package=onnxruntime --enable-plugin=tk-inter --output-dir=dist --output-filename=WhisperUI.exe main.py && move dist\main.dist dist\WhisperUI
+        venv_win\Scripts\activate.bat
+        pyinstaller --name WhisperUI --windowed --noconfirm --clean --icon=icon.ico --hidden-import=tkinter --hidden-import=faster_whisper --hidden-import=ctranslate2 --hidden-import=av --hidden-import=tokenizers --hidden-import=huggingface_hub --hidden-import=onnxruntime --collect-all faster_whisper --collect-all ctranslate2 --collect-all tokenizers main.py
 
     - name: Verify build (macOS)
       if: runner.os == 'macOS'
