@@ -12,27 +12,6 @@ import threading
 import multiprocessing
 import sys
 import traceback
-import os
-
-# Add CUDA DLLs to PATH on Windows (for PyInstaller bundle)
-if sys.platform == "win32" and getattr(sys, 'frozen', False):
-    # We're running in a PyInstaller bundle
-    bundle_dir = sys._MEIPASS
-
-    # Add bundle directory and nvidia subdirectories to DLL search path
-    if hasattr(os, 'add_dll_directory'):
-        os.add_dll_directory(bundle_dir)
-        # Add nvidia subdirectories
-        nvidia_dirs = [os.path.join(bundle_dir, 'nvidia', d) for d in ['cublas', 'cudnn']
-                       if os.path.exists(os.path.join(bundle_dir, 'nvidia', d))]
-        for nv_dir in nvidia_dirs:
-            for root, dirs, files in os.walk(nv_dir):
-                if any(f.endswith('.dll') for f in files):
-                    os.add_dll_directory(root)
-
-    # Also add to PATH
-    os.environ['PATH'] = bundle_dir + os.pathsep + os.environ.get('PATH', '')
-
 from faster_whisper import WhisperModel
 
 
@@ -47,27 +26,11 @@ class WhisperApp:
         self.loaded_model_size = None  # Track which model is currently loaded
         self.model_size = tk.StringVar(value="base")
         self.language = tk.StringVar(value="Auto")
-        self.device = tk.StringVar(value="cpu")  # Device selection: "cpu" or "cuda"
         self.current_file = None
         self.segments_data = []  # Store segments with timestamps for SRT export
         self.stop_event = threading.Event()  # Event to signal transcription stop
 
-        # Check if CUDA is available
-        self.cuda_available = self.check_cuda_available()
-
         self.setup_ui()
-
-    def check_cuda_available(self):
-        """Check if CUDA is available without crashing"""
-        try:
-            # Try to create a test model with CUDA
-            # This is a safe way to check without complex detection
-            import ctranslate2
-            if hasattr(ctranslate2, 'get_cuda_device_count'):
-                return ctranslate2.get_cuda_device_count() > 0
-        except Exception:
-            pass
-        return False
 
     def setup_ui(self):
         # Main container
@@ -129,33 +92,6 @@ class WhisperApp:
             width=12
         )
         self.language_dropdown.pack(side=tk.LEFT)
-
-        # Device selection (radio buttons)
-        device_frame = tk.Frame(controls_frame)
-        device_frame.pack(side=tk.LEFT, padx=(0, 10))
-
-        tk.Label(device_frame, text="Device:", font=("Helvetica", 11)).pack(side=tk.LEFT, padx=(0, 5))
-
-        # CPU radio button (always enabled)
-        self.cpu_radio = tk.Radiobutton(
-            device_frame,
-            text="CPU (int8)",
-            variable=self.device,
-            value="cpu",
-            font=("Helvetica", 10)
-        )
-        self.cpu_radio.pack(side=tk.LEFT, padx=(0, 5))
-
-        # GPU radio button (disabled if CUDA not available)
-        self.gpu_radio = tk.Radiobutton(
-            device_frame,
-            text="GPU (CUDA)",
-            variable=self.device,
-            value="cuda",
-            font=("Helvetica", 10),
-            state=tk.NORMAL if self.cuda_available else tk.DISABLED
-        )
-        self.gpu_radio.pack(side=tk.LEFT)
 
         # Buttons frame (to organize on next row)
         buttons_frame = tk.Frame(main_frame)
@@ -365,21 +301,12 @@ class WhisperApp:
                 self.root.after(0, lambda name=requested_model: self.status.config(text=f"Loading {name} model...", fg="#FF9800"))
                 self.root.after(0, lambda: self.root.update())
 
-                # Get device selection from radio buttons
-                device = self.device.get()  # "cpu" or "cuda"
-                compute_type = "float16" if device == "cuda" else "int8"
-
-                print(f"Loading model: {requested_model} on device: {device} with compute_type: {compute_type}")
-                sys.stdout.flush()
-
+                # Always use CPU with int8 optimization
                 self.model = WhisperModel(
                     requested_model,
-                    device=device,
-                    compute_type=compute_type
+                    device="cpu",
+                    compute_type="int8"
                 )
-
-                print(f"Model loaded successfully!")
-                sys.stdout.flush()
 
                 # Track which model is loaded
                 self.loaded_model_size = requested_model
@@ -387,14 +314,7 @@ class WhisperApp:
                 return True
             except Exception as e:
                 error_msg = str(e)
-                error_trace = traceback.format_exc()
-                print(f"ERROR loading model:")
-                print(f"  Device: {device}")
-                print(f"  Compute type: {compute_type}")
-                print(f"  Error message: {error_msg}")
-                print(f"  Full traceback:\n{error_trace}")
-                sys.stdout.flush()
-                self.root.after(0, lambda msg=error_msg: messagebox.showerror("Model Error", f"Failed to load model: {msg}\n\nCheck console for details."))
+                self.root.after(0, lambda msg=error_msg: messagebox.showerror("Model Error", f"Failed to load model: {msg}"))
                 return False
         return True
 
