@@ -4,23 +4,24 @@ WhisperUI GPU Edition - Audio/Video Transcription App
 Uses openai-whisper with PyTorch for GPU (CUDA) acceleration
 """
 
+import sys
+import os
+
+# Fix for PyInstaller: ensure stdout/stderr exist BEFORE importing whisper
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, 'w')
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, 'w')
+
 import tkinter as tk
 from tkinter import filedialog, scrolledtext, messagebox
 from tkinter import ttk
 from pathlib import Path
 import threading
 import multiprocessing
-import sys
 import traceback
-import os
 import whisper
 import torch
-
-# Fix for PyInstaller: ensure stdout/stderr exist
-if sys.stdout is None:
-    sys.stdout = open(os.devnull, 'w')
-if sys.stderr is None:
-    sys.stderr = open(os.devnull, 'w')
 
 
 class WhisperApp:
