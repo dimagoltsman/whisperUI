@@ -230,11 +230,6 @@ jobs:
         path: dist/WhisperUI-Windows-GPU.zip
         retention-days: 30
 
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: dist/WhisperUI-Windows-GPU.zip
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # Note: GPU build is too large for GitHub releases (>2GB limit)
+    # Download from GitHub Actions artifacts instead
+    # Or upload manually to external host (Google Drive, Dropbox, etc.)
