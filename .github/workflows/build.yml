@@ -200,7 +200,7 @@ jobs:
       shell: cmd
       run: |
         python -m venv venv_gpu
-        call venv_gpu\Scripts\activate.bat && python -m pip install --upgrade pip && pip install git+https://github.com/openai/whisper.git && pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && pip install pyinstaller
+        call venv_gpu\Scripts\activate.bat && python -m pip install --upgrade pip && pip install git+https://github.com/openai/whisper.git && pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124 && pip install pyinstaller
 
     - name: Build Windows GPU app
       shell: cmd
