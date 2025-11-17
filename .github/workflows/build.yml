@@ -76,7 +76,7 @@ jobs:
       if: runner.os == 'Windows'
       shell: cmd
       run: |
-        call venv_win\Scripts\activate.bat && python -m nuitka --standalone --assume-yes-for-downloads --windows-console-mode=attach --windows-icon-from-ico=icon.ico --include-package=faster_whisper --include-package=ctranslate2 --include-package=nvidia --include-package=tkinter --include-package=av --include-package=tokenizers --include-package=huggingface_hub --include-package=onnxruntime --enable-plugin=tk-inter --output-dir=dist --output-filename=WhisperUI.exe main.py && move dist\main.dist dist\WhisperUI
+        call venv_win\Scripts\activate.bat && python -m nuitka --standalone --assume-yes-for-downloads --windows-console-mode=attach --windows-icon-from-ico=icon.ico --include-package=faster_whisper --include-package=ctranslate2 --include-package=nvidia --include-package=tkinter --include-package=av --include-package=cython --include-package=tokenizers --include-package=huggingface_hub --include-package=onnxruntime --enable-plugin=tk-inter --output-dir=dist --output-filename=WhisperUI.exe main.py && move dist\main.dist dist\WhisperUI
 
     - name: Verify build (macOS)
       if: runner.os == 'macOS'
