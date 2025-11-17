@@ -64,7 +64,7 @@ jobs:
       shell: cmd
       run: |
         python -m venv venv_win
-        call venv_win\Scripts\activate.bat && python -m pip install --upgrade pip && pip install -r requirements.txt && pip install nuitka ordered-set zstandard && pip install nvidia-cublas-cu12 nvidia-cudnn-cu12
+        call venv_win\Scripts\activate.bat && python -m pip install --upgrade pip && pip install -r requirements.txt && pip install nuitka ordered-set zstandard cython && pip install nvidia-cublas-cu12 nvidia-cudnn-cu12
 
     - name: Build macOS app
       if: runner.os == 'macOS'
