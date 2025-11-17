@@ -12,8 +12,15 @@ import threading
 import multiprocessing
 import sys
 import traceback
+import os
 import whisper
 import torch
+
+# Fix for PyInstaller: ensure stdout/stderr exist
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, 'w')
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, 'w')
 
 
 class WhisperApp:
@@ -284,8 +291,11 @@ class WhisperApp:
                 self.root.after(0, lambda: self.root.update())
 
                 # Load model with GPU if available
+                # Set download_root to user's home directory to avoid permission issues
                 device = self.device.get()
-                self.model = whisper.load_model(requested_model, device=device)
+                download_root = os.path.expanduser("~/.cache/whisper")
+                os.makedirs(download_root, exist_ok=True)
+                self.model = whisper.load_model(requested_model, device=device, download_root=download_root)
 
                 # Track which model is loaded
                 self.loaded_model_size = requested_model
