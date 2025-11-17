@@ -205,7 +205,7 @@ jobs:
     - name: Build Windows GPU app
       shell: cmd
       run: |
-        call venv_gpu\Scripts\activate.bat && pyinstaller --name WhisperUI-GPU --windowed --noconfirm --clean --icon=icon.ico --hidden-import=tkinter --hidden-import=whisper --hidden-import=torch --collect-all whisper --collect-data torch --exclude-module torchvision --exclude-module matplotlib --exclude-module scipy main_gpu.py
+        call venv_gpu\Scripts\activate.bat && pyinstaller --name WhisperUI-GPU --console --noconfirm --clean --icon=icon.ico --hidden-import=tkinter --hidden-import=whisper --hidden-import=torch --collect-all whisper --collect-data torch --exclude-module torchvision --exclude-module matplotlib --exclude-module scipy main_gpu.py
 
     - name: Verify build
       shell: cmd
@@ -218,16 +218,11 @@ jobs:
           exit /b 1
         )
 
-    - name: Create ZIP archive
-      shell: powershell
-      run: |
-        Compress-Archive -Path dist\WhisperUI-GPU -DestinationPath dist\WhisperUI-Windows-GPU.zip
-
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: WhisperUI-Windows-GPU
-        path: dist/WhisperUI-Windows-GPU.zip
+        path: dist/WhisperUI-GPU/
         retention-days: 30
 
     # Note: GPU build is too large for GitHub releases (>2GB limit)
