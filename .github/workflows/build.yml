@@ -205,7 +205,7 @@ jobs:
     - name: Build Windows GPU app
       shell: cmd
       run: |
-        call venv_gpu\Scripts\activate.bat && pyinstaller --name WhisperUI-GPU --console --noconfirm --clean --icon=icon.ico --hidden-import=tkinter --hidden-import=whisper --hidden-import=torch --collect-all whisper --collect-data torch --exclude-module torchvision --exclude-module matplotlib --exclude-module scipy main_gpu.py
+        call venv_gpu\Scripts\activate.bat && pyinstaller --name WhisperUI-GPU --console --noconfirm --clean --icon=icon.ico --hidden-import=tkinter --hidden-import=whisper --hidden-import=torch --hidden-import=torchaudio --collect-all whisper --collect-all torch --collect-all torchaudio --copy-metadata torch --copy-metadata torchaudio main_gpu.py
 
     - name: Verify build
       shell: cmd

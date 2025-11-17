@@ -35,7 +35,19 @@ class WhisperApp:
         self.loaded_model_size = None  # Track which model is currently loaded
         self.model_size = tk.StringVar(value="base")
         self.language = tk.StringVar(value="Auto")
-        self.device = tk.StringVar(value="cuda" if torch.cuda.is_available() else "cpu")
+
+        # Check if CUDA is available and compatible
+        self.cuda_available = False
+        if torch.cuda.is_available():
+            try:
+                # Try to create a small tensor on GPU to verify it works
+                torch.zeros(1).cuda()
+                self.cuda_available = True
+            except Exception:
+                # GPU exists but not compatible (e.g., compute capability too new)
+                self.cuda_available = False
+
+        self.device = tk.StringVar(value="cuda" if self.cuda_available else "cpu")
         self.current_file = None
         self.segments_data = []  # Store segments with timestamps for SRT export
         self.stop_event = threading.Event()  # Event to signal transcription stop
@@ -48,7 +60,13 @@ class WhisperApp:
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         # Title
-        device_name = "GPU (CUDA)" if torch.cuda.is_available() else "CPU"
+        if self.cuda_available:
+            device_name = "GPU (CUDA)"
+        elif torch.cuda.is_available():
+            device_name = "CPU (GPU not compatible)"
+        else:
+            device_name = "CPU"
+
         title_label = tk.Label(
             main_frame,
             text=f"Whisper Transcription - {device_name}",
