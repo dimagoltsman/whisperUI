@@ -182,3 +182,61 @@ jobs:
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows-gpu:
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/')  # Only build GPU on release
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies (Windows GPU)
+      run: |
+        python -m venv venv_gpu
+        venv_gpu\Scripts\activate.bat
+        python -m pip install --upgrade pip
+        pip install openai-whisper torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+        pip install pyinstaller
+
+    - name: Build Windows GPU app
+      run: |
+        venv_gpu\Scripts\activate.bat
+        pyinstaller --name WhisperUI-GPU --windowed --noconfirm --clean --icon=icon.ico --hidden-import=tkinter --hidden-import=whisper --hidden-import=torch --collect-all whisper --collect-all torch --collect-all torchaudio main_gpu.py
+
+    - name: Verify build
+      shell: cmd
+      run: |
+        if exist "dist\WhisperUI-GPU\WhisperUI-GPU.exe" (
+          echo Build successful
+          dir dist\WhisperUI-GPU
+        ) else (
+          echo Build failed
+          exit /b 1
+        )
+
+    - name: Create ZIP archive
+      shell: powershell
+      run: |
+        Compress-Archive -Path dist\WhisperUI-GPU -DestinationPath dist\WhisperUI-Windows-GPU.zip
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: WhisperUI-Windows-GPU
+        path: dist/WhisperUI-Windows-GPU.zip
+        retention-days: 30
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/WhisperUI-Windows-GPU.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
