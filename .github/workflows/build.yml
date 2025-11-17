@@ -197,17 +197,15 @@ jobs:
         python-version: '3.10'
 
     - name: Install dependencies (Windows GPU)
+      shell: cmd
       run: |
         python -m venv venv_gpu
-        venv_gpu\Scripts\activate.bat
-        python -m pip install --upgrade pip
-        pip install openai-whisper torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-        pip install pyinstaller
+        call venv_gpu\Scripts\activate.bat && python -m pip install --upgrade pip && pip install openai-whisper torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && pip install pyinstaller
 
     - name: Build Windows GPU app
+      shell: cmd
       run: |
-        venv_gpu\Scripts\activate.bat
-        pyinstaller --name WhisperUI-GPU --windowed --noconfirm --clean --icon=icon.ico --hidden-import=tkinter --hidden-import=whisper --hidden-import=torch --collect-all whisper --collect-all torch --collect-all torchaudio main_gpu.py
+        call venv_gpu\Scripts\activate.bat && pyinstaller --name WhisperUI-GPU --windowed --noconfirm --clean --icon=icon.ico --hidden-import=tkinter --hidden-import=whisper --hidden-import=torch --collect-all whisper --collect-all torch --collect-all torchaudio main_gpu.py
 
     - name: Verify build
       shell: cmd
